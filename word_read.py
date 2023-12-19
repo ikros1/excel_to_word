@@ -15,5 +15,5 @@ def read_word_document(file_path):
                 print(cell.text)
 
 # 用法示例
-file_path = 'word_file/read_file.docx'
+file_path = 'word_file/example.docx'
 read_word_document(file_path)
