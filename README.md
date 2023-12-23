@@ -46,4 +46,4 @@
 
 ### /download_file 
 
-#### send_json { str download_url }
+#### send_json { str task_id }
