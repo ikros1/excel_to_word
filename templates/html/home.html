@@ -1,0 +1,282 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+</head>
+<body>
+    <h1>Api Test</h1>
+
+    <h2>return test</h2>
+    <h3 id="return"></h3>
+    <br>
+
+
+    <h3>/upload_word</h3>
+
+    <form id="uploadForm" action="http://127.0.0.1:5000/upload_word" method="post" enctype="multipart/form-data">
+        <br>
+        <label for="wordFile">Upload Word File:</label>
+        <br>
+        <input type="file" name="file" id="wordFile" accept=".docx">
+        <br>
+        <button type="button" onclick="uploadFile('wordFile', 'uploadForm')">Upload</button>
+        <br>
+    </form>
+
+    <br>
+
+    <h3>/upload_excel</h3>
+
+    <form id="uploadExcelForm" action="http://127.0.0.1:5000/upload_excel" method="post" enctype="multipart/form-data">
+        <br>
+        <label for="excelFile">Upload Excel File:</label>
+        <br>
+        <input type="file" name="file" id="excelFile" accept=".xlsx">
+        <br>
+        <button type="button" onclick="uploadFile('excelFile', 'uploadExcelForm')">Upload</button>
+    </form>
+
+    <!-- JavaScript代码 -->
+    <script>
+    function uploadFile(inputId, formId) {
+        var fileInput = document.getElementById(inputId);
+        var file = fileInput.files[0];
+
+        if (file) {
+            var formData = new FormData();
+            formData.append("file", file);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", document.getElementById(formId).action, true);
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // 处理上传成功的逻辑
+                    var response = JSON.parse(xhr.responseText);
+                    console.log(response);
+                    var h3Element = document.getElementById('return');
+                    // 检查元素是否存在
+                    if (h3Element) {
+                        // 更新元素的文本内容
+                        h3Element.textContent = xhr.responseText;
+                    }
+                }
+            };
+
+            xhr.send(formData);
+        } else {
+            // 处理未选择文件的逻辑
+            console.log("Please select a file.");
+        }
+    }
+    </script>
+
+    <br>
+    <h3>/upload_task_info</h3>
+
+    <form id="uploadTaskInfoForm" action="http://127.0.0.1:5000/upload_task_info" method="post">
+        <br>
+        <label for="userId">User ID:</label>
+        <br>
+        <input type="text" name="user_id" id="userId">
+        <br>
+        <label for="wordFileName">Word File Name:</label>
+        <br>
+        <input type="text" name="word_file_name" id="wordFileName">
+        <br>
+        <label for="excelFileName">Excel File Name:</label>
+        <br>
+        <input type="text" name="excel_file_name" id="excelFileName">
+        <br>
+        <label for="passwd">Password:</label>
+        <br>
+        <input type="password" name="passwd" id="passwd">
+        <br>
+        <button type="button" onclick="submitTaskInfo()">Submit Task Info</button>
+        <br>
+    </form>
+
+    <script>function submitTaskInfo() {
+        var formData = {
+            user_id: document.getElementById("userId").value,
+            word_file_name: document.getElementById("wordFileName").value,
+            excel_file_name: document.getElementById("excelFileName").value,
+            passwd: document.getElementById("passwd").value
+        };
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://127.0.0.1:5000/upload_task_info", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    // 处理成功响应
+                    var jsonResponse = JSON.parse(xhr.responseText);
+                    console.log(jsonResponse);
+                    var h3Element = document.getElementById('return');
+                    // 检查元素是否存在
+                    if (h3Element) {
+                        // 更新元素的文本内容
+                        h3Element.textContent = xhr.responseText;
+                    }
+                } else {
+                    // 处理错误响应
+                    console.error("Error: " + xhr.status);
+                }
+            }
+        };
+        xhr.send(JSON.stringify(formData));
+    }
+    </script>
+
+
+    <br>
+    <h3>/task_start</h3>
+
+    <form id="startTaskForm" action="http://127.0.0.1:5000/task_start" method="post">
+        <br>
+        <label for="taskId">Task ID:</label>
+        <br>
+        <input type="text" name="task_id" id="taskId">
+        <br>
+        <label for="taskPasswd">Password:</label>
+        <br>
+        <input type="password" name="passwd" id="taskPasswd">
+        <br>
+        <button type="button" onclick="startTask()">Start Task</button>
+        <br>
+    </form>
+
+    <script>function startTask() {
+        var formData = {
+            task_id: document.getElementById("taskId").value,
+            passwd: document.getElementById("taskPasswd").value
+        };
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://127.0.0.1:5000/task_start", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    // 处理成功响应
+                    var jsonResponse = JSON.parse(xhr.responseText);
+                    console.log(jsonResponse);
+                    var h3Element = document.getElementById('return');
+                    // 检查元素是否存在
+                    if (h3Element) {
+                        // 更新元素的文本内容
+                        h3Element.textContent = xhr.responseText;
+                    }
+                } else {
+                    // 处理错误响应
+                    console.error("Error: " + xhr.status);
+                }
+            }
+        };
+        xhr.send(JSON.stringify(formData));
+    }
+    </script>
+
+    <br>
+    <h3>/get_task_info</h3>
+
+    <form id="getTaskInfoForm" action="http://127.0.0.1:5000/get_task_info" method="post">
+        <br>
+        <label for="getTaskId">Task ID:</label>
+        <br>
+        <input type="text" name="task_id" id="getTaskId">
+        <br>
+        <label for="getTaskPasswd">Password:</label>
+        <br>
+        <input type="password" name="passwd" id="getTaskPasswd">
+        <br>
+        <button type="button" onclick="getTaskInfo()">Get Task Info</button>
+        <br>
+    </form>
+
+    <script>function getTaskInfo() {
+        var formData = {
+            task_id: document.getElementById("getTaskId").value,
+            passwd: document.getElementById("getTaskPasswd").value
+        };
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://127.0.0.1:5000/get_task_info", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    // 处理成功响应
+                    var jsonResponse = JSON.parse(xhr.responseText);
+                    console.log(jsonResponse);
+                    var h3Element = document.getElementById('return');
+                    // 检查元素是否存在
+                    if (h3Element) {
+                        // 更新元素的文本内容
+                        h3Element.textContent = xhr.responseText;
+                    }
+                } else {
+                    // 处理错误响应
+                    console.error("Error: " + xhr.status);
+                }
+            }
+        };
+        xhr.send(JSON.stringify(formData));
+    }
+    </script>
+
+    <br>
+    <h3>/get_download_info</h3>
+
+    <form id="getDownInfoForm" action="http://127.0.0.1:5000/get_download_info" method="post">
+        <br>
+        <label for="downTaskId">Task ID:</label>
+        <br>
+        <input type="text" name="task_id" id="downTaskId">
+        <br>
+        <label for="downTaskPasswd">Password:</label>
+        <br>
+        <input type="password" name="passwd" id="downTaskPasswd">
+        <br>
+        <button type="button" onclick="getDownloadInfo()">Get Download Info</button>
+        <br>
+    </form>
+
+    <script>function getDownloadInfo() {
+        var formData = {
+            task_id: document.getElementById("downTaskId").value,
+            passwd: document.getElementById("downTaskPasswd").value
+        };
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://127.0.0.1:5000/get_download_info", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    // 处理成功响应
+                    var jsonResponse = JSON.parse(xhr.responseText);
+                    console.log(jsonResponse);
+                    var h3Element = document.getElementById('return');
+                    // 检查元素是否存在
+                    if (h3Element) {
+                        // 更新元素的文本内容
+                        h3Element.textContent = xhr.responseText;
+                        document.getElementById("pre").href = jsonResponse["preview_href"]
+                        document.getElementById("zip").href = jsonResponse["zip_href"]
+                    }
+                } else {
+                    // 处理错误响应
+                    console.error("Error: " + xhr.status);
+                }
+            }
+        };
+        xhr.send(JSON.stringify(formData));
+    }
+    </script>
+
+
+
+<a id= "pre" href="/trans_file?path=output/example.docx">预览文件</a>
+<a id= "zip" href="/trans_file?path=output/example.docx">zip文件</a>
+</body>
+</html>

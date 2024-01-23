@@ -7,10 +7,17 @@ import shutil
 import zipfile
 
 
+def get_project_root():
+    path = os.path.abspath(os.path.dirname(__file__))
+    # return path
+    return path.replace("\\", "/")
+
+
 class TaskInstance:
     # 用户实例执行单元任务类
     # 实现对用户上传接收，初始化任务，检查任务， 执行任务， 返回任务结果， 返回费用详情， 查询任务进度与状态，超时和已完成任务资源的回收的实现
     def __init__(self, index, from_person_id, passwd):
+        self.root_path = get_project_root()
         # 执行密码
         self.passwd = str(passwd)
         # 任务队列编号
@@ -31,6 +38,8 @@ class TaskInstance:
         # checked_error
         # 任务当前状态信息描述
         self.status_info = ""
+        # 总共替换词条
+        self.replace_count = 0
         # 需要支付的金额
         self.pay = 0
         # 任务开始的时间
@@ -42,13 +51,17 @@ class TaskInstance:
         # 任务excel文件名
         self.excel_file = ""
         # 上传excel文件路径
-        self.upload_excel_file_path = "uploads/excel/"
+        self.upload_excel_file_path = self.root_path + "/uploads/excel/"
         # 上传word文件路径
-        self.upload_word_file_path = "uploads/word/"
+        self.upload_word_file_path = self.root_path + "/uploads/word/"
         # 发送文件路径
-        self.send_file_path = "output/" + str(self.from_person_id) + "/"
+        self.send_file_path = self.root_path + "/output/" + str(self.from_person_id) + "/"
         os.makedirs(self.send_file_path, exist_ok=True)
+        os.makedirs(self.send_file_path + '/doc/', exist_ok=True)
         # 用户指定名格式种类  #写不完后期写
+        self.return_file_path = "/trans_file?path=output/" + str(self.from_person_id) + "/"
+        self.download_preview_file_href = ""
+        self.download_zip_file_href = ""
         self.user_like_words = ""
         # 用户任务完成百分比
         self.task_over_percent = 0
@@ -57,12 +70,10 @@ class TaskInstance:
         # 替换词列表
         self.replacements_list = []
         # 返回文件包名
-        self.send_zip_file_path_name = ""
         # 读取实例化的word和excel对应的handle
         self.word_file_handle = None
         self.excel_file_handle = None
-        self.last_one_preview_file_path_name = ""
-        self.magnification = 1000
+        self.magnification = 0.01
 
     def make_replace_list(self):
         print("start make_replace_list from id: " + self.from_person_id)
@@ -134,29 +145,25 @@ class TaskInstance:
                     new_text = str(new_text)
                     if old_text in run.text:
                         run.text = run.text.replace(old_text, new_text)
+                        self.replace_count += 1
 
-        self.last_one_preview_file_path_name = self.send_file_path + save_file_name
-        self.word_file_handle.save(self.send_file_path + save_file_name)
+        self.download_preview_file_href = self.return_file_path + 'doc/' + save_file_name
+        self.word_file_handle.save(self.send_file_path + '/doc/' + save_file_name)
         print("replace text in docx success from id : " + self.from_person_id + "save file name :" + save_file_name)
 
     def delete_output_file(self):
         print("start delete all file from id : " + self.from_person_id)
         try:
-            os.remove(self.send_zip_file_path_name)
-            print(f"Deleted file: {self.send_zip_file_path_name}")
+            os.remove(self.upload_word_file_path + self.word_file)
+            print(f"Deleted file: {self.upload_word_file_path + self.word_file}")
         except Exception as e:
-            print(f"Error deleting file {self.send_zip_file_path_name}: {e}")
-        print("start delete all file from id : " + self.from_person_id)
+            print(f"Error deleting file {self.upload_word_file_path + self.word_file}: {e}")
         try:
-            os.remove(self.upload_excel_file_path+self.word_file)
-            print(f"Deleted file: {self.upload_excel_file_path+self.word_file}")
+            os.remove(self.upload_excel_file_path + self.excel_file)
+            print(f"Deleted file: {self.upload_excel_file_path + self.excel_file}")
         except Exception as e:
-            print(f"Error deleting file {self.upload_excel_file_path+self.word_file}: {e}")
-        try:
-            os.remove(self.upload_excel_file_path+self.excel_file)
-            print(f"Deleted file: {self.upload_excel_file_path+self.excel_file}")
-        except Exception as e:
-            print(f"Error deleting file {self.upload_excel_file_path+self.excel_file}: {e}")
+            print(f"Error deleting file {self.upload_excel_file_path + self.excel_file}: {e}")
+
         for root, dirs, files in os.walk(self.send_file_path):
             for file in files:
                 file_path = os.path.join(root, file)
@@ -174,17 +181,30 @@ class TaskInstance:
                 except Exception as e:
                     print(f"Error deleting folder {dir_path}: {e}")
 
+        try:
+            shutil.rmtree(self.send_file_path)
+            print(f"Deleted folder: {self.send_file_path}")
+        except Exception as e:
+            print(f"Error deleting folder {self.send_file_path}: {e}")
+
     def zip_folder(self):
         if self.status == "ready_to_back":
-            folder_path = self.send_file_path
-            zip_path = self.send_file_path + str(self.from_person_id) + ".zip"
-            self.send_zip_file_path_name = self.send_file_path + str(self.from_person_id) + ".zip"
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_f:
-                for root, dirs, files in os.walk(folder_path):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arc_name = os.path.relpath(file_path, folder_path)
-                        zip_f.write(file_path, arcname=arc_name)
+            folder_path = self.send_file_path + '/doc/'
+            zip_filename = f"{self.from_person_id}.zip"
+            zip_path = os.path.join(self.send_file_path, zip_filename)
+            self.download_zip_file_href = os.path.join(self.return_file_path, zip_filename)
+
+            try:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_f:
+                    for root, dirs, files in os.walk(folder_path):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            arc_name = os.path.relpath(file_path, folder_path)
+                            zip_f.write(file_path, arcname=arc_name)
+            except FileNotFoundError as e:
+                print(f"Error: {e}. Make sure the folder exists.")
+            except Exception as e:
+                print(f"An unexpected error occurred: {e}")
 
     def all_file_replace_text_in_docx(self):
         print("start all file replace text in docx from id : " + self.from_person_id)
@@ -193,17 +213,21 @@ class TaskInstance:
                 # 个性化处理命名方式实现位置，没写，不知道咋写
                 save_file_name = self.user_like_words + str(i) + ".doc"
                 # 任务百分比进程实现
-                decimal_number = i+1 / len(self.replacements_list)
+                decimal_number = (i + 1) / len(self.replacements_list)
                 if decimal_number == 1:
                     self.over_time = time.time()
-                    self.pay = (self.over_time - self.start_time) * self.magnification
+                    # self.pay = (self.over_time - self.start_time) * self.magnification
+                    self.pay = self.magnification * self.replace_count
                     self.status_info = f"Task {self.index}: done"
                     self.status = "ready_to_back"
-                rounded_number = round(decimal_number, 2)
-                # 将保留小数后的数字转换为字符串
-                self.task_over_percent = str(rounded_number)
+                    self.task_over_percent = 1
+                else:
+                    rounded_number = round(decimal_number, 2)
+                    # 将保留小数后的数字转换为字符串
+                    self.task_over_percent = rounded_number
                 print(
-                    "file replace text in docx from id : " + self.from_person_id + " percent: " + self.task_over_percent + " have done")
+                    "file replace text in docx from id : " + self.from_person_id + " percent: " + str(
+                        self.task_over_percent) + " have done")
                 self.replace_text_in_docx(save_file_name, replacements)
             except Exception as e:
                 self.status_info = f"Error in Task {self.index}: {str(e)}"
@@ -213,9 +237,9 @@ class TaskInstance:
     def execute(self):
         try:
             # 在这里执行实际的任务逻辑
-            time.sleep(5)
+            # time.sleep(5)
             self.check_all_file()
-            if self.task_init_ing_flag:
+            if not self.task_init_ing_flag:
                 time.sleep(5)
                 self.make_replace_list()
                 if self.status != "error":
@@ -227,12 +251,27 @@ class TaskInstance:
             self.status = "error"
 
     def check_out_time(self):
+        over_time_set_flag = False
         while True:
+            time.sleep(4)
+            if self.status == "deleted":
+                break
             if self.status == "error":
-                self.over_time = time.time()
-            start_time_long = time.time() - self.start_time
-            over_time_long = time.time() - self.over_time
-            if start_time_long > 5000 or over_time_long > 500 or self.status == "need_to_delete":
+                if not over_time_set_flag:
+                    self.over_time = time.time()
+                    over_time_set_flag = True
+            if self.start_time != 0:
+                start_time_long = time.time() - self.start_time
+            else:
+                start_time_long = 0
+
+            print("start time long: " + str(start_time_long))
+            if self.over_time == 0:
+                over_time_long = 0
+            else:
+                over_time_long = time.time() - self.over_time
+            print("over time long: " + str(over_time_long))
+            if start_time_long > 300 or over_time_long > 300 or self.status == "need_to_delete":
                 self.status_info = f"delete Task {str(self.index)} from id : {str(self.from_person_id)}"
                 self.status = "delete_ing"
                 print(self.status_info)
