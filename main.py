@@ -66,11 +66,12 @@ def upload_word_file():
 
     # 检查文件类型是否允许
     if file and allowed_file(file.filename):
+        id = generate_unique_string()
         # 保存文件到本地
-        filename = os.path.join(app.config['UPLOAD_FOLDER'] + 'word', generate_unique_string() + '.docx')
+        filename = os.path.join(app.config['UPLOAD_FOLDER'] + 'word', id + '.docx')
         file.save(filename)
         return jsonify(
-            {'success': '1', 'message': 'File successfully uploaded', 'file_name': generate_unique_string() + '.docx'})
+            {'success': '1', 'message': 'File successfully uploaded', 'file_name': id + '.docx'})
 
     return jsonify({'success': '0', 'message': 'File type not allowed', 'file_name': ''})
 
@@ -88,12 +89,13 @@ def upload_excel_file():
 
     # 检查文件类型是否允许
     if file and allowed_file(file.filename):
+        id = generate_unique_string()
         # 保存文件到本地
-        filename = os.path.join(app.config['UPLOAD_FOLDER'] + 'excel', generate_unique_string() + '.xlsx')
+        filename = os.path.join(app.config['UPLOAD_FOLDER'] + 'excel', id + '.xlsx')
         file.save(filename)
         return jsonify(
             {'success': '1', 'message': 'File successfully uploaded',
-             'file_name': generate_unique_string() + '.xlsx'}), 200
+             'file_name': id + '.xlsx'}), 200
 
     return jsonify({'success': '0', 'message': 'File type not allowed', 'file_name': ''}), 200
 
